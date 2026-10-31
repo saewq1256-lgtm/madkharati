@@ -4,7 +4,8 @@ name: Build Madkharati APK
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -12,6 +13,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -22,20 +24,19 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - 
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          accept-android-sdk-licenses: true
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
       - name: Extract project
-        run: unzip -q madkharati-android-project-github.zip
-      
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          accept-android-sdk-licenses: true
-          
+        run: unzip -o -q madkharati-android-project-github.zip
+
       - name: Build APK
         working-directory: madkharati-android
         run: gradle assembleDebug
