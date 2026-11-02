@@ -4,7 +4,8 @@ name: Build Madkharati APK
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -12,6 +13,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -22,10 +24,12 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-       - name: Set up Android SDK
-  run: |
-    yes | sdkmanager --licenses
-    sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        run: |
+          sdkmanager --install "platform-tools" "platforms;android-35" "build-tools;35.0.0"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -35,6 +39,11 @@ jobs:
       - name: Extract project
         run: |
           unzip -o -q madkharati-cloud-sync-project.zip
+          ls -la
+          test -d madkharati-android || { echo "Project folder madkharati-android not found"; exit 1; }
+
+      - name: Build APK
+        run: |
           cd madkharati-android
           gradle assembleDebug
 
