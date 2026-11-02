@@ -4,8 +4,7 @@ name: Build Madkharati APK
 on:
   workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 permissions:
   contents: read
@@ -13,7 +12,6 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -24,12 +22,8 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Accept Android SDK licenses
-        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
-
-      - name: Install Android SDK packages
-        run: |
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -37,11 +31,10 @@ jobs:
           gradle-version: '8.9'
 
       - name: Extract project
-        run: unzip -o -q madkharati-cloud-sync-project.zip
-
-      - name: Build APK
-        working-directory: madkharati-android
-        run: gradle assembleDebug
+        run: |
+          unzip -o -q madkharati-cloud-sync-project.zip
+          cd madkharati-android
+          gradle assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
