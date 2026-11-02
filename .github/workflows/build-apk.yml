@@ -1,3 +1,4 @@
+
 name: Build Madkharati APK
 
 on:
@@ -25,10 +26,10 @@ jobs:
 
       - name: Install Android SDK packages
         run: |
-          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
-          SDKMANAGER=$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager 2>/dev/null | head -n 1)
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager 2>/dev/null | head -n 1)"
           if [ -z "$SDKMANAGER" ]; then
-            echo "ERROR: sdkmanager not found"
+            echo "ERROR: Android SDK manager not found"
             exit 1
           fi
           yes | "$SDKMANAGER" --licenses || true
@@ -41,21 +42,19 @@ jobs:
 
       - name: Extract project
         run: |
-          ZIP_FILE=""
-          for f in madkharati-cloud-sync-project.zip madkharati-cloud-sync-project-repaired.zip madkharati-android-project-github.zip; do
-            if [ -f "$f" ]; then
-              ZIP_FILE="$f"
-              break
-            fi
-          done
+          ZIP_FILE="$(find . -maxdepth 1 -type f -name '*.zip' | head -n 1)"
           if [ -z "$ZIP_FILE" ]; then
-            echo "ERROR: Project ZIP file not found in repository root"
+            echo "ERROR: No ZIP file found in repository root"
             ls -la
             exit 1
           fi
-          echo "Extracting $ZIP_FILE"
+          echo "Using project file: $ZIP_FILE"
           unzip -o -q "$ZIP_FILE"
-          test -d madkharati-android || { echo "ERROR: madkharati-android folder not found"; exit 1; }
+          if [ ! -d "madkharati-android" ]; then
+            echo "ERROR: madkharati-android folder not found after extraction"
+            find . -maxdepth 3 -type d
+            exit 1
+          fi
 
       - name: Build APK
         run: |
@@ -68,4 +67,3 @@ jobs:
           name: madkharati-apk
           path: madkharati-android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-          
